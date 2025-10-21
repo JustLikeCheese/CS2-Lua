@@ -13,4 +13,4 @@ cs2.config {
 cs2.clear()
 cs2.bind("x", "noclip") -- X 键飞行
 cs2.print("跑图脚本已加载") -- 控制台输出消息
-cs2.build() -- 构建 CFG
+cs2.build("output.cfg") -- 构建 CFG
