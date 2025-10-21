@@ -19,7 +19,6 @@ lua54 ..\test\practice\main.lua output.cfg 1
 ### 导入库 Import Library
 
 ```lua
-package.path = package.path .. ";C:/Users/Cheese/Desktop/CS2-Lua/src/?.lua"
 require "cs2"
 ```
 
