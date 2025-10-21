@@ -11,32 +11,60 @@ function cs2.add(code)
     table.insert(cs2.code, code)
 end
 
+function cs2._config(t)
+    local _type = nil
+    local _config = {}
+    for k, v in pairs(t) do
+        _k_type = type(k)
+        if _k_type == "string" then
+            table.insert(_config, k .. " " .. cs2.format(v) .. ";")
+        elseif _k_type == "number" then
+            table.insert(_config, v .. ";")
+        end
+    end
+    return _config
+end
+
 --- 加载 CFG 配置
 --- Load CS2 cfg
 --- @param t table
 function cs2.config(t)
-    local _type = nil
-    for k, v in pairs(t) do
-        _type = type(k)
-        if _type == "string" then
-            cs2.add(k .. " " .. tostring(v))
-        elseif _type == "number" then
-            cs2.add(tostring(v))
-        end
+    local _config = cs2._config(t)
+    for i=1, #_config do
+        cs2.add(_config[i])
     end
 end
 
-local function format(arg)
-    return "\"" .. tostring(arg) .. "\""
+function cs2.format(arg)
+    local _type = type(arg)
+    if _type == "boolean" or _type == "number" then
+        return tostring(arg)
+    elseif _type == "nil" then
+        return "\"\""
+    elseif _type == "string" then
+        if string.find(arg, "%s") ~= nil then
+            return "\"" .. arg .. "\""
+        else
+            return arg
+        end
+    else
+        error("[CS2.lua] Unsupported type: " .. _type)
+    end
 end
 
 function cs2.func(funcName, ...)
     local line = funcName
-    local args = {...}
+    local args = { ... }
     for i = 1, #args do
-        line = line .. " " .. format(args[i])
+        line = line .. " " .. cs2.format(args[i])
     end
-    return line
+    cs2.add(line)
+end
+
+-- 还原值
+-- Revert value to default
+function cs2.default(key, value)
+    cs2.func("default", key, value)
 end
 
 --- 绑定按键
@@ -107,6 +135,8 @@ end
 --- @--- @param filename boolean|nil|string
 --- @--- @param mutlines boolean|nil
 function cs2.build(filename, mutlines)
+    filename = filename or arg[1]
+    mutlines = mutlines or arg[2]
     local cfg = cs2._build(mutlines)
     if type(filename) == "string" then
         writeFile(filename, cfg)
