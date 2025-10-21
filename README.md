@@ -10,6 +10,12 @@ Lua 脚本比 CFG 具有更高的可读性, 并且 Lua 的语法, 让 CFG 更加
 
 ## 教程 Tutorial
 
+### 测试脚本
+
+```sh
+lua54 ..\test\practice\main.lua output.cfg 1
+```
+
 ### 导入库 Import Library
 
 ```lua
