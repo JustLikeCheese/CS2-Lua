@@ -1,7 +1,6 @@
 ---@diagnostic disable: lowercase-global
-cs2 = {
-    code = {}
-}
+cs2 = {code = {}}
+require "cs2-api"
 
 function cs2.add(code)
     if type(code) ~= "string" then
@@ -59,30 +58,6 @@ function cs2.func(funcName, ...)
         line = line .. " " .. cs2.format(args[i])
     end
     cs2.add(line)
-end
-
--- 还原值
--- Revert value to default
-function cs2.default(key, value)
-    cs2.func("default", key, value)
-end
-
---- 绑定按键
---- Bind key
-function cs2.bind(key, command)
-    cs2.func("bind", key, command)
-end
-
---- 创建别名
---- Create alias
-function cs2.alias(key, command)
-    cs2.func("alias ", key, command)
-end
-
---- 输出文本
---- Print text
-function cs2.print(text)
-    cs2.func("print", text)
 end
 
 --- 运行 CS2 命令
