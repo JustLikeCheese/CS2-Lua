@@ -9,9 +9,10 @@ cs2.config {
     cl_showfps = 0, -- 显示帧数
     mp_drop_knife_enable = 1, -- 允许丢刀
     mp_weapons_glow_on_ground = 1, -- 武器掉落高亮显示
+    cl_follow_grenade_view = 1 -- 跟随投掷物
 }
 cs2.bind("x", "noclip") -- X 键飞行
 cs2.bind("k", "sv_rethrow_last_grenade") -- 重现服务器内上一个使用过的投掷物
-cs2.bind("l", "subclass_change 515") -- 蝴蝶刀
+cs2.bind("l", "subclass_create 515") -- 蝴蝶刀
 cs2.print("跑图脚本已加载") -- 控制台输出消息
 cs2.build() -- 构建 CFG

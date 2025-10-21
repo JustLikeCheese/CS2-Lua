@@ -13,11 +13,11 @@ end
 --- 输出文本
 --- Print text
 function cs2.print(text)
-    cs2.func("print", text)
+    cs2.func("echo", text)
 end
 
 --- 输出文本
 --- Print text
 function cs2.println(text)
-    cs2.func("println", text)
+    cs2.func("echoln", text)
 end
