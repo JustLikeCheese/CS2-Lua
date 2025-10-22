@@ -1,58 +1,112 @@
 ---@diagnostic disable: lowercase-global
-cs2 = { code = {}, arg = arg }
-require "cs2-api"
+cs2 = { queue = {}, arg = arg }
 
 --- 添加代码到构建队列
---- @param code any
+--- 当传入 table 到构建代码队列时. 会根据构建时的 multilines 参数来判断是否要生成多行代码
+--- @param code string|table
 function cs2.add(code)
-    table.insert(cs2.code, code)
+    table.insert(cs2.queue, code)
 end
 
---- 加载 CFG 配置
---- Load CS2 cfg
---- @param t table
-function cs2.config(t)
-    local formatted = cs2.format(t)
-    for i = 1, #formatted do
-        cs2.add(formatted[i])
+--- 格式化 Lua 字符串为 CS2 参数
+--- 如果字符串包含空格或制表符，添加引号
+--- @param str string
+--- @return string
+function cs2.formatString(str)
+    if string.find(str, "[ \t]") then
+        str = str:gsub("\\", "\\\\"):gsub("\"", "\\\"")
+        return "\"" .. str .. "\""
+    else
+        return str
     end
 end
 
---- 格式化参数为 CFG 格式
---- @param arg any
---- @return any
-function cs2.format(arg)
+--- 格式化 Lua 表为 CS2 参数
+--- @param tbl table
+--- @return table, boolean
+function cs2.formatTable(tbl)
+    local config = {}
+    local blank = false
+    for k, v in pairs(tbl) do
+        local keyType = type(k)
+        if keyType == "string" then
+            table.insert(config, k .. " " .. cs2.formatArg(v))
+            blank = true
+        elseif keyType == "number" then
+            local _type = type(v)
+            if _type == "string" then
+                if string.find(v, "[ \t]") ~= nil then
+                    blank = true
+                end
+                table.insert(config, v)
+            else
+                error("[CS2.lua] Unsupported type: " .. _type)
+            end
+        end
+    end
+    return config, blank
+end
+
+--- 格式化 Lua 函数为 CS2 参数
+--- @param func function
+--- @return string
+function cs2.formatFunction(func)
+    local tempQueue = {}
+    -- 创建 CS2 add 代理
+    local virtualCS2 = setmetatable({}, {
+        __index = function(t, k)
+            if k == "add" then
+                return function(code)
+                    table.insert(tempQueue, code)
+                end
+            else
+                return cs2[k]
+            end
+        end
+    })
+    -- 创建沙盒环境
+    local sandbox = setmetatable({
+        cs2 = virtualCS2
+    }, {
+        __index = _G
+    })
+    -- 支持 Lua 5.1
+    if setfenv then
+        setfenv(func, sandbox)
+        func()
+    else
+        -- Lua 5.2+: 将函数转为字符串再用 load 加载并设置环境
+        local chunk = string.dump(func)
+        local vfunc, err = load(chunk, nil, "b", sandbox)
+        if not vfunc then
+            error("[CS2.lua] Failed to load function: " .. tostring(err))
+        end
+        vfunc()
+    end
+    local builtConfig = cs2._build(tempQueue, false)
+    return "\"" .. builtConfig .. "\""
+end
+
+--- 格式化单个 Lua 参数为单个 CS2 参数
+--- @param arg boolean|number|nil|string|table|function
+--- @return string
+function cs2.formatArg(arg)
     local argType = type(arg)
     if argType == "boolean" or argType == "number" then
         return tostring(arg)
     elseif argType == "nil" then
         return "\"\""
     elseif argType == "string" then
-        -- 如果字符串包含空格或制表符，添加引号
-        if string.find(arg, "[ \t]") ~= nil then
-            return "\"" .. arg .. "\""
-        else
-            return arg
-        end
+        return cs2.formatString(arg)
     elseif argType == "table" then
-        local config = {}
-        for k, v in pairs(arg) do
-            local keyType = type(k)
-            if keyType == "string" then
-                table.insert(config, k .. " " .. cs2.format(v)) -- key value
-            elseif keyType == "number" then
-                table.insert(config, v) -- value
-            end
+        local config, blank = cs2.formatTable(arg)
+        local configString = table.concat(config, ";")
+        if blank then
+            configString = "\"" .. configString .. "\""
         end
-        return config
+        return configString
     elseif argType == "function" then
-        local savedCode = cs2.code -- 保存构建代码队列
-        cs2.code = {}
-        arg()
-        local builtConfig = cs2._build(false)
-        cs2.code = savedCode
-        builtConfig = builtConfig:gsub(";+", ";"):gsub("^;", ""):gsub(";$", "") -- 去除多余的分号
-        return "\"" .. builtConfig .. "\""
+        return cs2.formatFunction(arg)
     else
         error("[CS2.lua] Unsupported type: " .. argType)
     end
@@ -65,40 +119,25 @@ function cs2.func(funcName, ...)
     local line = funcName
     local args = { ... }
     for i = 1, #args do
-        line = line .. " " .. cs2.format(args[i])
+        line = line .. " " .. cs2.formatArg(args[i])
     end
     cs2.add(line)
 end
 
---- 运行 CS2 命令
---- Run CS2 command
---- @param command string
-function cs2.run(command)
-    cs2.add(command)
-end
-
---- 清空 CS2 控制台输出
---- Clear CS2 console output
-function cs2.clear()
-    cs2.run("clear")
-end
-
 --- 内部构建函数
+--- @param queue table
 --- @param multilines boolean|nil
 --- @return string
-function cs2._build(multilines)
+function cs2._build(queue, multilines)
     local codeLines = {}
-    for i = 1, #cs2.code do
-        local line = cs2.code[i]
+    for i = 1, #queue do
+        local line = queue[i]
         local lineType = type(line)
         if lineType == "table" then
-            -- 处理表格式的代码
             for j = 1, #line do
-                local subline = line[j]
-                table.insert(codeLines, subline .. ";")
+                table.insert(codeLines, line[j] .. ";")
             end
         elseif lineType == "string" then
-            -- 处理字符串格式的代码
             table.insert(codeLines, line .. ";")
         else
             error("[CS2.lua] Unsupported type: " .. lineType)
@@ -111,51 +150,6 @@ function cs2._build(multilines)
     end
 end
 
---- 读取文件内容
---- @param filename string
---- @return string
-local function readFile(filename)
-    local file = io.open(filename, "r")
-    if not file then
-        error("[CS2.lua] Can't open file: " .. filename)
-    end
-    local content = file:read("*all")
-    file:close()
-    return content
-end
-
---- 写入文件
---- @param filename string
---- @param text string
-local function writeFile(filename, text)
-    local file = io.open(filename, "wb")
-    if not file then
-        error("[CS2.lua] Can't open file: " .. filename)
-    end
-    file:write(text)
-    file:close()
-end
-
---- 构建 Lua 脚本为 CFG
---- Build Lua script as CFG
---- @param filename any 输出文件名，nil 则输出到控制台
---- @param multilines any 是否多行格式
---- @param ignore any 是否忽略命令行参数
---- @return string
-function cs2.build(filename, multilines, ignore)
-    if not ignore then
-        filename = filename or cs2.arg[1]
-        multilines = multilines or cs2.arg[2]
-    end
-    local cfg = cs2._build(multilines)
-    if type(filename) == "string" then
-        writeFile(filename, cfg)
-    else
-        print(cfg)
-    end
-    -- 清空代码队列
-    cs2.code = {}
-    return cfg
-end
-
+require "cs2-build"
+require "cs2-api"
 return cs2

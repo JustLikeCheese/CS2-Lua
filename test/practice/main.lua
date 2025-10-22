@@ -9,7 +9,10 @@ cs2.config {
     cl_showfps = 0,                              -- 显示帧数
     mp_drop_knife_enable = 1,                    -- 允许丢刀
     mp_weapons_glow_on_ground = 1,               -- 武器掉落高亮显示
-    cl_follow_grenade_view = 1                   -- 跟随投掷物
+    cl_follow_grenade_view = 1,                  -- 跟随投掷物
+    mp_maxmoney = 16000,                         -- 最大16000金钱
+    mp_startmoney = 16000,                       -- 出生金钱为16000
+    god = 1,
 }
 
 cs2.bind("x", "noclip")                          -- X 键飞行

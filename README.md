@@ -77,6 +77,12 @@ cs2.build()
 cs2.bind("x", "noclip")
 ```
 
+当然也可以为 function
+
+```lua
+function 
+```
+
 ### cs2.clear
 
 清除控制台输出 Clear console output
@@ -85,7 +91,31 @@ cs2.bind("x", "noclip")
 cs2.clear()
 ```
 
-### 控制台输出
+### cs2.print && cs2.println
+
+在控制台输出信息 Print message to console
+
+```lua
+cs2.print("Hello World!")
+cs2.println("你好世界")
+```
+
+### cs2.run
+
+运行命令 Run command
+
+```lua
+cs2.run("mp_buy_anywhere 1")
+cs2.run("mp_buytime 999999999")
+```
+
+### cs2.exec
+
+运行 CFG 文件 Run cfg file
+
+```lua
+cs2.exec("cfg/example.cfg")
+```
 
 ## 例子 Example
 
