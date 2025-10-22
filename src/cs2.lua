@@ -71,7 +71,9 @@ function cs2.formatFunction(func)
         __index = _G
     })
     -- 支持 Lua 5.1
+---@diagnostic disable-next-line: deprecated
     if setfenv then
+---@diagnostic disable-next-line: deprecated
         setfenv(func, sandbox)
         func()
     else
