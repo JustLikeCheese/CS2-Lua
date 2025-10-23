@@ -15,8 +15,8 @@ cs2.config {
     god = 1,
 }
 
-cs2.bind("x", "noclip")                          -- X 键飞行
-cs2.bind("j", function()                         -- J 键一键清空道具
+cs2.bind("x", "noclip")  -- X 键飞行
+cs2.bind("j", function() -- J 键一键清空道具
     cs2.config {
         "ent_fire hegrenade_projectile kill",    -- 清除抛出的高爆手雷实体
         "ent_fire flashbang_projectile kill",    -- 清除抛出的闪光弹实体，无法清除爆开后的闪白效果
@@ -27,8 +27,9 @@ cs2.bind("j", function()                         -- J 键一键清空道具
         "ent_fire inferno kill"                  -- 清除火焰效果
     }
 end)
+
 cs2.bind("k", "sv_rethrow_last_grenade") -- 重现服务器内上一个使用过的投掷物
 cs2.bind("l", "subclass_create 515") -- 蝴蝶刀
 
 cs2.print("跑图脚本已加载") -- 控制台输出消息
-cs2.build() -- 构建 CFG
+cs2.build("跑图.cfg") -- 构建 CFG
