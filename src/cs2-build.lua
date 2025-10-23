@@ -38,11 +38,10 @@ function cs2.build(filename, multilines)
         cs2.warn(table.concat(warnings, " "))
     end
     -- 获取默认参数
-    filename = cs2.filename or filename or nil
-    multilines = cs2.multilines or multilines or nil
-    print(filename, multilines)
+    filename = cs2.core.filename or filename
+    multilines = cs2.core.multilines or multilines
     local cfg = cs2.cfg.compile(cs2.core.queue, multilines)
-    if type(filename) == "string" then
+    if not cs2.core.stdout and type(filename) == "string" then
         writeFile(filename, cfg)
     else
         print(cfg)

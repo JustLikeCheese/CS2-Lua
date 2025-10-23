@@ -25,9 +25,11 @@ function cs2.cfg.parse(input)
                     escapeMode = true
                 elseif c == '"' and stringMode == 1 and not escapeMode then -- 结束双引号
                     stringMode = nil
+---@diagnostic disable-next-line: param-type-mismatch
                     table.insert(currentConfig, string.sub(line, startIndex, i))
                 elseif c == "'" and stringMode == 2 and not escapeMode then -- 结束单引号
                     stringMode = nil
+---@diagnostic disable-next-line: param-type-mismatch
                     table.insert(currentConfig, string.sub(line, startIndex, i))
                 else
                     escapeMode = false

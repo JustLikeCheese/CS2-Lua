@@ -23,6 +23,24 @@ function string.split(str, split)
     return result
 end
 
+-- string.random
+function string.random(n)
+    local chars = {
+        "a", "b", "c", "d", "e", "f", "g", "h", "i", "j",
+        "k", "l", "m", "n", "o", "p", "q", "r", "s",
+        "t", "u", "v", "w", "x", "y", "z",
+        "A", "B", "C", "D", "E", "F",
+        "G", "H", "I", "J", "K",
+        "L", "M", "N",
+        "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "_"
+    }
+    local str = ""
+    for i = 1, n do
+        str = str .. chars[math.random(#chars)]
+    end
+    return str
+end
+
 ---@diagnostic disable-next-line: lowercase-global
 function dump(o)
     local t = {}
@@ -80,4 +98,24 @@ function dump(o)
     end
     t = _ToString(o, '')
     return table.concat(t)
+end
+
+function io.list(path)
+    local is_windows = package.config:sub(1, 1) == '\\'
+    local cmd
+    if is_windows then
+        cmd = 'dir "' .. path .. '" /b'
+    else
+        cmd = 'ls -1 "' .. path .. '"'
+    end
+
+    local files = {}
+    local p = io.popen(cmd)
+    if p then
+        for file in p:lines() do
+            table.insert(files, file)
+        end
+        p:close()
+    end
+    return files
 end

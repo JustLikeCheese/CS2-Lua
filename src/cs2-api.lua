@@ -64,6 +64,34 @@ function cs2.exec(path)
     end
 end
 
+--- 安全运行 CS2 脚本
+--- Run CS2 script safely
+function cs2.exec_safe(path)
+    if type(path) == "string" then
+        cs2.func("execifexists", path)
+    elseif type(path) == "table" then
+        for _, v in ipairs(path) do
+            cs2.exec_safe(v)
+        end
+    else
+        cs2.core.error("Invalid argument type: " .. type(path))
+    end
+end
+
+--- 异步运行 CS2 脚本
+--- Run CS2 script async
+function cs2.exec_async(path)
+    if type(path) == "string" then
+        cs2.func("exec_async", path)
+    elseif type(path) == "table" then
+        for _, v in ipairs(path) do
+            cs2.exec_async(v)
+        end
+    else
+        cs2.core.error("Invalid argument type: " .. type(path))
+    end
+end
+
 --- 绑定按键
 --- Bind key
 --- @param key string
