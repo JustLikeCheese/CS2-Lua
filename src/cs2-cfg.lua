@@ -152,14 +152,15 @@ function cs2.cfg.formatTable(tbl)
     for key, value in pairs(tbl) do
         local key_type = type(key)
         local value_type = type(value)
-        local str, str_blank
+        local str = nil
+        local str_blank = false
         if key_type == "number" then
             if value_type == "string" then
                 str, str_blank = cs2.cfg.formatString(value)
             elseif value_type == "table" then
                 str, str_blank = cs2.cfg.formatTable(value)
             elseif value_type == "function" then
-                str, str_blank = cs2.cfg.formatFunction(value)
+                str, str_blank = cs2.cfg.formatFunction(value), true
             elseif value_type == "boolean" or value_type == "number" then
                 table.insert(config, tostring(value))
             else
@@ -178,9 +179,9 @@ end
 --- @param func function
 --- @return string
 function cs2.cfg.formatFunction(func)
-    local oldQueue = cs2.queue
+    local oldQueue = cs2.core.queue
     local tempQueue = {}
-    cs2.queue = tempQueue
+    cs2.core.queue = tempQueue
 
     local success, err = pcall(func)
     if not success then
@@ -188,7 +189,7 @@ function cs2.cfg.formatFunction(func)
         cs2.core.warning(debug.traceback())
     end
 
-    cs2.queue = oldQueue
+    cs2.core.queue = oldQueue
     local builtConfig = cs2.cfg.compile(tempQueue, false)
     return (cs2.cfg.formatString(builtConfig))
 end

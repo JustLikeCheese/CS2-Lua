@@ -4,7 +4,9 @@
 local function readFile(filename)
     local file = io.open(filename, "rb")
     if not file then
-        error("[CS2.lua] Can't open file: " .. filename)
+        cs2.core.error("Can't open file: " .. filename)
+---@diagnostic disable-next-line: missing-return-value
+        return
     end
     local content = file:read("*all")
     file:close()
@@ -17,7 +19,8 @@ end
 local function writeFile(filename, text)
     local file = io.open(filename, "wb")
     if not file then
-        error("[CS2.lua] Can't open file: " .. filename)
+        cs2.core.error("Can't open file: " .. filename)
+        return
     end
     file:write(text)
     file:close()
@@ -29,9 +32,16 @@ end
 --- @param multilines boolean|nil
 --- @return string
 function cs2.build(filename, multilines)
-    filename = cs2.filename or filename
-    multilines = cs2.multilines or multilines
-    local cfg = cs2.cfg.compile(cs2.queue, multilines)
+    -- 获取 WARNING 警告信息
+    local warnings = cs2.core.warnings
+    if #warnings > 0 then
+        cs2.warn(table.concat(warnings, " "))
+    end
+    -- 获取默认参数
+    filename = cs2.filename or filename or nil
+    multilines = cs2.multilines or multilines or nil
+    print(filename, multilines)
+    local cfg = cs2.cfg.compile(cs2.core.queue, multilines)
     if type(filename) == "string" then
         writeFile(filename, cfg)
     else
