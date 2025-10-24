@@ -23,22 +23,20 @@ function string.split(str, split)
     return result
 end
 
--- string.random
-function string.random(n)
-    local chars = {
-        "a", "b", "c", "d", "e", "f", "g", "h", "i", "j",
-        "k", "l", "m", "n", "o", "p", "q", "r", "s",
-        "t", "u", "v", "w", "x", "y", "z",
-        "A", "B", "C", "D", "E", "F",
-        "G", "H", "I", "J", "K",
-        "L", "M", "N",
-        "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "_"
-    }
-    local str = ""
-    for i = 1, n do
-        str = str .. chars[math.random(#chars)]
+local charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+function string.random(name, length)
+	local ret = { }
+    if length == nil then
+        length = name
     end
-    return str
+    if name~=nil then
+        table.insert(ret, name .. "_")
+    end
+	for i = 1, length do
+		local index = math.random(1, #charset)
+		table.insert(ret, string.sub(charset, index, index))
+	end
+	return table.concat(ret)
 end
 
 ---@diagnostic disable-next-line: lowercase-global

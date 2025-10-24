@@ -1,5 +1,5 @@
 require "cs2-comp"
-cs2.core = { queue = {}, warnings = {}, multilines = true, stdout = false, binding = {} }
+cs2.core = { queue = {}, warnings = {}, multilines = true, stdout = false, binding = {}, headers = {}}
 
 --- 使用例子
 --- ```bash

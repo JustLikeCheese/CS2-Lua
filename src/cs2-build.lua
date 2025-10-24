@@ -40,7 +40,9 @@ function cs2.build(filename, multilines)
     -- 获取默认参数
     filename = cs2.core.filename or filename
     multilines = cs2.core.multilines or multilines
-    local cfg = cs2.cfg.compile(cs2.core.queue, multilines)
+    local header = cs2.core.headers
+    local cfg_header = table.concat(header, "")
+    local cfg = cfg_header..cs2.cfg.compile(cs2.core.queue, multilines)
     if not cs2.core.stdout and type(filename) == "string" then
         writeFile(filename, cfg)
     else

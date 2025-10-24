@@ -4,57 +4,53 @@ cs2.cfg = {}
 
 --- 解析 CFG
 --- @param input string
---- @return table
+--- @return table, boolean
 function cs2.cfg.parse(input)
     if type(input) ~= "string" then
         cs2.core.error("input must be a string")
-        return {}
+        return {}, false
     end
     local lines = string.split(input, "\n")
+    local blank = false
     local configs = {}
     for _, line in ipairs(lines) do
         local currentConfig = {}
-        local stringMode = nil -- 1: ", 2: '
         local escapeMode = false
         local startIndex = nil
+        local stringMode = nil  -- 1: ", 2: '
+        local stringBlank = false
+        local specialMode = nil -- 1: ;, 2: /
         -- 遍历当前行的字符
         for i = 1, #line do
-            local c = line[i]
+            local c = string.sub(line, i, i)
             if stringMode then
-                if c == "\\" then                                           -- 处理转义
+                if not startIndex then
+                    cs2.core.error("error while process string: " .. _)
+                    return {}, false
+                end
+                if c == "\\" then                                                                                 -- 处理转义
                     escapeMode = true
-                elseif c == '"' and stringMode == 1 and not escapeMode then -- 结束双引号
+                elseif not escapeMode and ((c == '"' and stringMode == 1) or (c == "'" and stringMode == 2)) then -- 结束引号
+                    local str = ""
+                    if not stringBlank then
+                        str = string.sub(line, startIndex + 1, i - 1)
+                    else
+                        str = string.sub(line, startIndex, i)
+                    end
+                    table.insert(currentConfig, str)
                     stringMode = nil
----@diagnostic disable-next-line: param-type-mismatch
-                    table.insert(currentConfig, string.sub(line, startIndex, i))
-                elseif c == "'" and stringMode == 2 and not escapeMode then -- 结束单引号
-                    stringMode = nil
----@diagnostic disable-next-line: param-type-mismatch
-                    table.insert(currentConfig, string.sub(line, startIndex, i))
+                    startIndex = nil
+                elseif c == " " or c == "\t" then
+                    stringBlank = true
                 else
                     escapeMode = false
                 end
             else
-                if c == ";" then       -- 分号, 保存当前配置, 并创建新的配置
-                    if startIndex then -- 前面存在未结束的元素
-                        table.insert(currentConfig, string.sub(line, startIndex, i - 1))
-                        startIndex = nil
-                    end
-                    if #currentConfig > 0 then -- 保存当前配置
-                        table.insert(configs, currentConfig)
-                    end
-                    currentConfig = {}                      -- 创建新的配置
-                    goto continue
+                if c == ";" then                            -- 分号, 保存当前配置, 并创建新的配置
+                    specialMode = 1
                 elseif c == "/" and line[i + 1] == "/" then -- 遇到注释跳过当前行
-                    if startIndex then                      -- 前面存在未结束的元素
-                        table.insert(currentConfig, string.sub(line, startIndex, i - 1))
-                        startIndex = nil
-                    end
-                    if #currentConfig > 0 then -- 保存当前配置
-                        table.insert(configs, currentConfig)
-                    end
-                    break
-                elseif c == " " or c == "\t" then -- 空格/制表符结束元素
+                    specialMode = 2
+                elseif c == " " or c == "\t" then           -- 空格/制表符结束元素
                     if startIndex then
                         table.insert(currentConfig, string.sub(line, startIndex, i - 1))
                         startIndex = nil
@@ -63,43 +59,48 @@ function cs2.cfg.parse(input)
                     if startIndex then -- 前面存在未结束的元素
                         table.insert(currentConfig, string.sub(line, startIndex, i - 1))
                     end
-                    startIndex = i
                     stringMode = 1
+                    startIndex = i
                 elseif c == "'" then
                     if startIndex then -- 前面存在未结束的元素
                         table.insert(currentConfig, string.sub(line, startIndex, i - 1))
                     end
-                    startIndex = i
                     stringMode = 2
-                else
-                    -- 为普通字符且 startIndex 为空，则设置
-                    if not startIndex then
-                        startIndex = i
-                    end
+                    startIndex = i
+                elseif not startIndex then -- 为普通字符且 startIndex 为空，则设置
+                    startIndex = i
                 end
             end
             -- 处理最后一个元素
-            if i == #line then
-                if startIndex then
-                    -- 检查字符串是否未结束
-                    local str = string.sub(line, startIndex)
-                    if stringMode == 1 then
-                        str = str .. '"'
-                        cs2.core.warning("string " .. str .. " is not closed in line " .. i)
-                    elseif stringMode == 2 then
-                        str = str .. "'"
-                        cs2.core.warning("string " .. str .. " is not closed in line " .. i)
+            if i == #line or specialMode ~= nil then
+                if startIndex then -- 检查字符串是否未结束
+                    local str = string.sub(line, startIndex, i)
+                    if stringMode ~= nil then
+                        cs2.core.warning("string " .. str .. " is not closed in line " .. _)
                     end
                     table.insert(currentConfig, str)
                 end
-                if #currentConfig > 0 then     -- 保存当前配置
+                if #currentConfig > 0 then -- 保存当前配置
                     table.insert(configs, currentConfig)
                 end
+                if specialMode == 1 then -- 创建新的配置
+                    currentConfig = {}
+                else                     -- 跳过当前行
+                    break
+                end
             end
-            ::continue::
         end
     end
-    return configs
+    return configs, blank
+end
+
+function cs2.cfg.isQuoted(str)
+    if #str < 2 then
+        return false
+    end
+    local first = string.byte(str, 1)
+    local last = string.byte(str, #str)
+    return (first == 34 and last == 34) or (first == 39 and last == 39)
 end
 
 --- 编译 Table 为 CFG

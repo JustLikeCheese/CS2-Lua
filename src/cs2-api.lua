@@ -1,16 +1,28 @@
 -- Counter-Strike 2 API
 -- 提供 CS2 API 的封装
-local cfg = cs2.cfg
+
+--- 运行 CS2 命令
+--- Run CS2 command
+--- @param command string
+function cs2.run(command)
+    local cfg = cs2.cfg.parse(command)
+    print("Run command: " .. command)
+    print(dump(cfg))
+    for _, v in ipairs(cfg) do
+        cs2.add(v)
+    end
+end
 
 --- 调用 CS2 函数
 --- @param funcName string
 --- @param ... any
 function cs2.func(funcName, ...)
-    local args = { funcName }
-    for _, arg in ipairs({ ... }) do
-        table.insert(args, cfg.formatArg(arg))
+    local args = {...}
+    local config = funcName
+    for i = 1, #args do
+        config = config .. " " .. cs2.cfg.formatArg(args[i])
     end
-    cs2.add(args)
+    cs2.run(config)
 end
 
 --- 加载 CFG 配置
@@ -37,16 +49,6 @@ function cs2.config(arg)
                 cs2.core.error("Invalid value type for key '" .. key .. "': " .. value_type)
             end
         end
-    end
-end
-
---- 运行 CS2 命令
---- Run CS2 command
---- @param command string
-function cs2.run(command)
-    local cfg = cs2.cfg.parse(command)
-    for _, v in ipairs(cfg) do
-        cs2.add(v)
     end
 end
 
